@@ -25,7 +25,9 @@ jobs:
       - name: Validate fork source contract
         run: python3 .github/rpg-runtime/verify-source.py
       - name: Build native VIC-20 core
-        run: make EMUTYPE=xvic -j"$(nproc)"
+        run: |
+          make EMUTYPE=xvic -j"$(nproc)"
+          python3 .github/rpg-runtime/test-state-restore.py ./vice_xvic_libretro.so
       - name: Build Web assets
         run: |
           mkdir "$RUNNER_TEMP/rpg-runtime-output"

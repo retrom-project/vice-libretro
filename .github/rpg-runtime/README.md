@@ -15,3 +15,14 @@ the emsdk image digest and linker commit. Candidate metadata records the source
 commit, branch, dirty status, tree digest, and every emitted asset hash. Archive
 member timestamps are omitted. Release CI checks annotated tags against the fixed
 maintenance baseline, runs native gates, and publishes RC tags as prereleases.
+
+The upstream sound guard prevents backward clock deltas. Retrom also reopens the
+VIC-20 sound device after a successful restore: loading a later snapshot into a
+fresh instance otherwise leaves sample leftovers behind the restored CPU clock
+and can hang the next frame in `vic_sound_clock`. This is a downstream fix,
+separate from the attributed upstream backport.
+
+Run `python3 .github/rpg-runtime/test-state-restore.py ./vice_xvic_libretro.so`
+after the native build. It generates a project-owned BASIC loop in a temporary
+directory, saves in one process, restores in another, then tests a backward
+restore. Both video and audio must resume within the hard process timeout.

@@ -8695,6 +8695,12 @@ static void load_trap(uint16_t addr, void *success)
 
 static void retro_unserialize_post(void)
 {
+#if defined(__XVIC__)
+   /* A fresh instance can restore a clock far ahead of the sound device.
+    * Reopen it before the next frame so VIC sample leftovers cannot turn
+    * into a negative sample interval and an unbounded unsigned clock loop. */
+   libretro_sound_reset();
+#endif
    /* Disable warp */
    if (vsync_get_warp_mode())
       vsync_set_warp_mode(0);

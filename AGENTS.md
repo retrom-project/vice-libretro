@@ -26,6 +26,8 @@ databases, credentials, and private game content.
   build the current worktree and emit only the declared release assets plus
   `retrom-core-candidate.json`.
 
-Before publishing, build the native `xvic` core, build the Web candidate, and
+Before publishing, build the native `xvic` core, run
+`python3 .github/rpg-runtime/test-state-restore.py ./vice_xvic_libretro.so`,
+build the Web candidate, and
 verify checkpoint restoration through a fresh Retrom launch. Do not publish
 ROMs, BIOS files, credentials, or host-specific code.
