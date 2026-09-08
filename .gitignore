@@ -7,3 +7,12 @@
 GPATH
 GTAGS
 GRTAGS
+
+# Python validation cache
+__pycache__/
+
+# Emscripten objects
+*.bc
+
+# Local candidate and evidence outputs
+/build/

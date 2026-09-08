@@ -1,0 +1,49 @@
+name: RPG Runtime Quality
+
+on:
+  pull_request:
+    branches: ["retrom/g1b4309f4d56d"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rpg-runtime-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install archive tool
+        run: sudo apt-get update && sudo apt-get install -y p7zip-full
+      - name: Validate fork source contract
+        run: python3 .github/rpg-runtime/verify-source.py
+      - name: Build native VIC-20 core
+        run: make EMUTYPE=xvic -j"$(nproc)"
+      - name: Build Web assets
+        run: |
+          mkdir "$RUNNER_TEMP/rpg-runtime-output"
+          .github/rpg-runtime/build-web.sh "$RUNNER_TEMP/rpg-runtime-output"
+      - name: Validate candidate assets
+        run: |
+          python3 .github/rpg-runtime/verify-release.py \
+            --output "$RUNNER_TEMP/rpg-runtime-output" \
+            --repository "https://github.com/$GITHUB_REPOSITORY" \
+            --tag retrom-core-g1b4309f4d56d-r1-rc.1 \
+            --commit "$GITHUB_SHA"
+      - name: Upload branch integration candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpg-runtime-vice-xvic-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/rpg-runtime-output/vice_xvic-wasm.data
+            ${{ runner.temp }}/rpg-runtime-output/COPYING
+            ${{ runner.temp }}/rpg-runtime-output/rpg-runtime-release.json
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "forkRepository": "https://github.com/retrom-project/vice-libretro",
+  "defaultBranch": "retrom/g1b4309f4d56d",
+  "upstreamMirrorBranch": "emulatorjs",
+  "upstreams": [
+    {
+      "role": "emulatorjs-core",
+      "repository": "https://github.com/EmulatorJS/vice-libretro",
+      "refType": "COMMIT",
+      "ref": "1b4309f4d56ded7bfc5ad7ba8d5a9a44ac3388a8",
+      "commit": "1b4309f4d56ded7bfc5ad7ba8d5a9a44ac3388a8"
+    },
+    {
+      "role": "serialization-sound-fix",
+      "repository": "https://github.com/libretro/vice-libretro",
+      "refType": "COMMIT",
+      "ref": "483e0bd4e6d24968306b8da932926b54bf936389",
+      "commit": "483e0bd4e6d24968306b8da932926b54bf936389"
+    },
+    {
+      "role": "emulatorjs-retroarch-linker",
+      "repository": "https://github.com/EmulatorJS/RetroArch",
+      "refType": "COMMIT",
+      "ref": "6dd4353937ef48b6ec0bfbdbb15d1c5992d86927",
+      "commit": "6dd4353937ef48b6ec0bfbdbb15d1c5992d86927"
+    }
+  ],
+  "releaseTagPattern": "^retrom-core-g1b4309f4d56d-r[1-9][0-9]*(-rc\\.[1-9][0-9]*)?$",
+  "adapterAbi": "emulatorjs-state-v1",
+  "releaseAssets": [
+    "vice_xvic-wasm.data",
+    "COPYING",
+    "rpg-runtime-release.json"
+  ]
+}
