@@ -8535,7 +8535,11 @@ bool retro_load_game(const struct retro_game_info *info)
       /* Empty cmdline processing required for VIC-20 core option cartridges on startup */
       process_cmdline("");
 
-#if defined(__XPET__) || defined(__XCBM2__) || defined(__XVIC__)
+#if defined(__XPET__)
+   /* PET has no built-in joystick ports. Its user-port adapter starts at 3. */
+   cur_port = 3;
+   cur_port_locked = true;
+#elif defined(__XCBM2__) || defined(__XVIC__)
    /* Joyport limit has to apply always */
    cur_port = 1;
    cur_port_locked = true;

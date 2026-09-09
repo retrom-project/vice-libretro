@@ -44,6 +44,9 @@ def run_phase(phase, root, library):
             return True
         if command == 15:
             variable = c.cast(data, c.POINTER(Variable)).contents
+            if phase == "joystick" and variable.key == b"vice_userport_joytype":
+                variable.value = b"PET"
+                return True
             if pet and variable.key == b"vice_pet_model":
                 variable.value = b"4032"
                 return True
@@ -82,7 +85,7 @@ def run_phase(phase, root, library):
 
     @c.CFUNCTYPE(c.c_int16, c.c_uint, c.c_uint, c.c_uint, c.c_uint)
     def input_state(_port, _device, _index, _button):
-        return 0
+        return int(_port == 0 and _device == 1 and _button == observed.get("button"))
 
     for name, callback in [("environment", environment), ("video_refresh", video),
                            ("audio_sample", sample), ("audio_sample_batch", audio),
@@ -97,9 +100,24 @@ def run_phase(phase, root, library):
     core.retro_init()
     game = Game(str(root / "loop.prg").encode(), None, 0, None)
     assert core.retro_load_game(c.byref(game)), "load failed"
-    for _ in range(400 if phase == "save" else 2):
+    if phase == "joystick":
+        for port in range(4):
+            core.retro_set_controller_port_device(port, 1 if port == 0 else 0)
+    for _ in range(400 if phase in ("save", "joystick") else 2):
         core.retro_run()
-    if phase == "save":
+    if phase == "joystick":
+        core.retro_get_memory_data.argtypes = [c.c_uint]
+        core.retro_get_memory_data.restype = c.c_void_p
+        ram = c.cast(core.retro_get_memory_data(2), c.POINTER(c.c_uint8))
+        assert ram, "system RAM unavailable"
+        # The BASIC fixture reads the actual VIA user-port pins into RAM.
+        for button, pins in [(None, 255), (7, 247), (None, 255), (6, 251), (None, 255), (0, 252)]:
+            observed["button"] = button
+            for _ in range(30):
+                core.retro_run()
+            assert ram[1000] == pins, f"PET user-port input {button}: expected {pins}, observed {ram[1000]}"
+        print("PET user-port joystick: direction, fire and release reached VIA pins")
+    elif phase == "save":
         size = core.retro_serialize_size()
         assert 0 < size < 16 * 1024 * 1024, "invalid state size"
         state = c.create_string_buffer(size)
@@ -143,6 +161,15 @@ def main():
         (root / "loop.prg").write_bytes(program)
         for phase in ("save", "load"):
             subprocess.run([sys.executable, __file__, phase, str(root), str(library)], check=True, timeout=15)
+        if "xpet" in library.name:
+            # Project-owned BASIC sets VIA direction to input and records its pins.
+            address = 0x0401; program = bytearray(address.to_bytes(2, "little"))
+            for number, body in [(10, b'\x9759459,0'), (20, b'\x971000,\xc2(59471)'), (30, b'\x8920')]:
+                address += 5 + len(body)
+                program += address.to_bytes(2, "little") + number.to_bytes(2, "little") + body + b'\0'
+            program += b'\0\0'
+            (root / "loop.prg").write_bytes(program)
+            subprocess.run([sys.executable, __file__, "joystick", str(root), str(library)], check=True, timeout=15)
     print("VICE fresh-process and backward restore: video/audio resumed")
 
 
