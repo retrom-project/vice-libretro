@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Restore a later VIC-20 clock in a fresh process; no external game inputs."""
+"""Restore a later VIC/TED clock in a fresh process; no external game inputs."""
 import ctypes as c
 from pathlib import Path
 import subprocess
@@ -119,7 +119,7 @@ def main():
         run_phase(sys.argv[1], Path(sys.argv[2]), Path(sys.argv[3]))
         return
     if len(sys.argv) != 2:
-        raise SystemExit("usage: test-state-restore.py <native xvic library>")
+        raise SystemExit("usage: test-state-restore.py <native xvic or xplus4 library>")
     library = Path(sys.argv[1]).resolve(strict=True)
     with TemporaryDirectory(prefix="retrom-xvic-state-") as directory:
         root = Path(directory)
@@ -127,7 +127,7 @@ def main():
         (root / "loop.prg").write_bytes(bytes.fromhex("01100a100a00893130000000"))
         for phase in ("save", "load"):
             subprocess.run([sys.executable, __file__, phase, str(root), str(library)], check=True, timeout=15)
-    print("VIC-20 fresh-process and backward restore: video/audio resumed")
+    print("VICE fresh-process and backward restore: video/audio resumed")
 
 
 if __name__ == "__main__":
