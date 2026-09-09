@@ -60,6 +60,8 @@ def run_phase(phase, root, library):
     @c.CFUNCTYPE(None, c.c_void_p, c.c_uint, c.c_uint, c.c_size_t)
     def video(_data, _width, _height, _pitch):
         observed["frames"] += 1
+        if _data:
+            observed["video"] = c.string_at(_data, _pitch * _height)
 
     @c.CFUNCTYPE(None, c.c_int16, c.c_int16)
     def sample(_left, _right):
@@ -99,6 +101,9 @@ def run_phase(phase, root, library):
         state = c.create_string_buffer(size)
         assert core.retro_serialize(state, size), "serialization failed"
         (root / "state").write_bytes(state.raw)
+        for _ in range(10):
+            core.retro_run()
+        (root / "reference-video").write_bytes(observed["video"])
     else:
         data = (root / "state").read_bytes()
         state = c.create_string_buffer(data)
@@ -110,6 +115,7 @@ def run_phase(phase, root, library):
                 core.retro_run()
             assert observed["frames"] > before["frames"], "video did not resume"
             assert observed["samples"] > before["samples"], "audio did not resume"
+            assert observed["video"] == (root / "reference-video").read_bytes(), "static game raster changed after restore"
     core.retro_unload_game()
     core.retro_deinit()
 
@@ -123,8 +129,14 @@ def main():
     library = Path(sys.argv[1]).resolve(strict=True)
     with TemporaryDirectory(prefix="retrom-xvic-state-") as directory:
         root = Path(directory)
-        # Project-owned VIC BASIC: load address $1001, line 10 GOTO 10, terminator.
-        (root / "loop.prg").write_bytes(bytes.fromhex("01100a100a00893130000000"))
+        # Project-owned BASIC: print a fixed caption, then loop without changing it.
+        program = bytearray((0x01, 0x10))
+        address = 0x1001
+        for number, body in [(10, b'\x99"RETROM STATE"'), (20, b'\x8920')]:
+            address += 5 + len(body)
+            program += address.to_bytes(2, "little") + number.to_bytes(2, "little") + body + b'\0'
+        program += b'\0\0'
+        (root / "loop.prg").write_bytes(program)
         for phase in ("save", "load"):
             subprocess.run([sys.executable, __file__, phase, str(root), str(library)], check=True, timeout=15)
     print("VICE fresh-process and backward restore: video/audio resumed")

@@ -274,6 +274,9 @@ int ted_snapshot_read_module(snapshot_t *s)
         goto fail;
     }
 
+    /* Rebuild the cursor position from the restored register pair. */
+    ted.crsrpos = ((ted.regs[0x0c] & 3) << 8) | ted.regs[0x0d];
+
     /* FIXME: Recalculate alarms and derived values.  */
 
     ted_irq_set_raster_line(ted.regs[0x0b] | ((ted.regs[0x0a] & 1) << 8));
@@ -301,13 +304,10 @@ int ted_snapshot_read_module(snapshot_t *s)
         ted.force_black_overscan_background_color = 0;
     }
 
-    if (ted.regs[0x06] & 0x8) {
-        ted.raster.display_ystart = ted.row_25_start_line;
-        ted.raster.display_ystop = ted.row_25_stop_line;
-    } else {
-        ted.raster.display_ystart = ted.row_24_start_line;
-        ted.raster.display_ystop = ted.row_24_stop_line;
-    }
+    /* TED drives vertical blanking itself. Its initialization/reset paths
+       disable the generic raster display interval; keep that invariant when
+       restoring instead of interpreting TED counter lines as canvas lines. */
+    ted.raster.display_ystart = ted.raster.display_ystop = -1;
 
     if (ted.regs[0x07] & 0x8) {
         ted.raster.display_xstart = TED_40COL_START_PIXEL;
