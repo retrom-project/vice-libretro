@@ -21,7 +21,7 @@ git -C /work/retroarch checkout -q --detach FETCH_HEAD
 
 cd /work/core
 emmake make -f Makefile clean "$@"
-emmake make -j"$(nproc)" -f Makefile platform=emscripten \
+emmake make -j4 -f Makefile platform=emscripten \
   INITIAL_HEAP=268435456 AUTO_MEMORY_GROWTH=1 "$@"
 
 archive=$(find . -maxdepth 1 -type f -name "${core_name}_libretro_emscripten.bc" -print)
@@ -32,7 +32,7 @@ install -m 0644 "$archive" /work/retroarch/libretro_emscripten.a
 emmake make -C /work/retroarch -f Makefile.emulatorjs \
   HAVE_CHD=1 HAVE_THREADS=0 PTHREAD_POOL_SIZE=0 ASYNC=1 HAVE_OPENGLES3=1 \
   STACK_SIZE=4194304 INITIAL_HEAP=134217728 \
-  TARGET="${core_name}_libretro.js" -j"$(nproc)"
+  TARGET="${core_name}_libretro.js" -j4
 
 install -m 0644 "/work/retroarch/${core_name}_libretro.js" /output/
 install -m 0644 "/work/retroarch/${core_name}_libretro.wasm" /output/

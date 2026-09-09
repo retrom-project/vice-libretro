@@ -11,8 +11,6 @@ from pathlib import Path
 
 TAG = re.compile(r"^retrom-core-g1b4309f4d56d-r[1-9][0-9]*(?:-rc\.[1-9][0-9]*)?$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
-ARCHIVE = "vice_xvic-wasm.data"
-MEMBERS = {"vice_xvic_libretro.js", "vice_xvic_libretro.wasm", "build.json", "core.json", "license.txt"}
 
 
 def digest(path: Path) -> str:
@@ -28,7 +26,10 @@ parser.add_argument("--output", type=Path, required=True)
 parser.add_argument("--repository", required=True)
 parser.add_argument("--tag", required=True)
 parser.add_argument("--commit", required=True)
+parser.add_argument("--core", choices=("vice_xvic", "vice_xpet", "vice_xplus4"), default="vice_xvic")
 args = parser.parse_args()
+ARCHIVE = f"{args.core}-wasm.data"
+MEMBERS = {f"{args.core}_libretro.js", f"{args.core}_libretro.wasm", "build.json", "core.json", "license.txt"}
 if TAG.fullmatch(args.tag) is None or COMMIT.fullmatch(args.commit) is None:
     raise SystemExit("RETROM_CORE_RELEASE_IDENTITY_INVALID")
 
@@ -59,15 +60,15 @@ with tempfile.TemporaryDirectory() as temporary:
         raise SystemExit("RETROM_CORE_ARCHIVE_INVALID")
     if any(path.is_symlink() or not path.is_file() for path in root.iterdir()):
         raise SystemExit("RETROM_CORE_ARCHIVE_INVALID")
-    wasm = (root / "vice_xvic_libretro.wasm").read_bytes()
-    javascript = (root / "vice_xvic_libretro.js").read_text(errors="strict")
+    wasm = (root / f"{args.core}_libretro.wasm").read_bytes()
+    javascript = (root / f"{args.core}_libretro.js").read_text(errors="strict")
     core = json.loads((root / "core.json").read_text())
     build = json.loads((root / "build.json").read_text())
     if wasm[:8] != b"\0asm\x01\0\0\0" or len(wasm) < 1_000_000:
         raise SystemExit("RETROM_CORE_WASM_INVALID")
-    if "vice_xvic" not in javascript or "Module" not in javascript:
+    if args.core not in javascript or "Module" not in javascript:
         raise SystemExit("RETROM_CORE_JAVASCRIPT_INVALID")
-    if core.get("name") != "vice_xvic" or core.get("save") != "nvr":
+    if core.get("name") != args.core or core.get("save") != "nvr":
         raise SystemExit("RETROM_CORE_MANIFEST_INVALID")
     if build != {"minimumEJSVersion": "4.2.2", "version": "2.0.2"}:
         raise SystemExit("RETROM_CORE_MANIFEST_INVALID")
