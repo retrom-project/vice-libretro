@@ -62,7 +62,10 @@ def source_digest() -> str:
 
 def finalize(output: Path, core_id: str) -> None:
     fork = json.loads((ROOT / "retrom-fork.json").read_text())
-    expected = sorted(name for name in fork["releaseAssets"] if name != "rpg-runtime-release.json")
+    assets = fork.get("developmentCandidateAssets", {}).get(core_id, fork["releaseAssets"] if core_id == "vice_xvic" else [])
+    if not assets:
+        raise SystemExit("PFB_CANDIDATE_CORE_INVALID")
+    expected = sorted(name for name in assets if name != "rpg-runtime-release.json")
     actual = sorted(path.name for path in output.iterdir())
     if actual != expected:
         raise SystemExit("PFB_CANDIDATE_OUTPUT_INVALID")

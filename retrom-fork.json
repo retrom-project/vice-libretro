@@ -32,5 +32,17 @@
     "vice_xvic-wasm.data",
     "COPYING",
     "rpg-runtime-release.json"
-  ]
+  ],
+  "developmentCandidateAssets": {
+    "vice_xpet": [
+      "vice_xpet-wasm.data",
+      "COPYING",
+      "source.tar.gz"
+    ],
+    "vice_xplus4": [
+      "vice_xplus4-wasm.data",
+      "COPYING",
+      "source.tar.gz"
+    ]
+  }
 }

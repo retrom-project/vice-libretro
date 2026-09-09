@@ -61,6 +61,10 @@ def main() -> int:
             "rpg-runtime-release.json",
         ],
     }
+    expected["developmentCandidateAssets"] = {
+        core: [f"{core}-wasm.data", "COPYING", "source.tar.gz"]
+        for core in ("vice_xpet", "vice_xplus4")
+    }
     if manifest != expected:
         raise SystemExit("RPG_RUNTIME_FORK_MANIFEST_INVALID")
     require("libretro/libretro-core.c", (
@@ -80,8 +84,8 @@ def main() -> int:
     ))
     require(".github/rpg-runtime/build-web.sh", (
         EMSDK,
-        "EMUTYPE=xvic",
-        "vice_xvic-wasm.data",
+        '"EMUTYPE=$emutype"',
+        '${core}-wasm.data',
         '"minimumEJSVersion":"4.2.2"',
     ))
     return 0
