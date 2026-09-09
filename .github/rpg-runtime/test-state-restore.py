@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Restore a later VIC/TED clock in a fresh process; no external game inputs."""
+"""Restore a later VIC/TED/CRTC clock in a fresh process; no external game inputs."""
 import ctypes as c
 from pathlib import Path
 import subprocess
@@ -18,6 +18,7 @@ class Game(c.Structure):
 def run_phase(phase, root, library):
     core = c.CDLL(str(library))
     variables = {}
+    pet = "xpet" in library.name
     directory = str(root).encode()
     observed = {"frames": 0, "samples": 0}
 
@@ -43,6 +44,9 @@ def run_phase(phase, root, library):
             return True
         if command == 15:
             variable = c.cast(data, c.POINTER(Variable)).contents
+            if pet and variable.key == b"vice_pet_model":
+                variable.value = b"4032"
+                return True
             if variable.key in variables:
                 variable.value = variables[variable.key]
                 return True
@@ -125,13 +129,13 @@ def main():
         run_phase(sys.argv[1], Path(sys.argv[2]), Path(sys.argv[3]))
         return
     if len(sys.argv) != 2:
-        raise SystemExit("usage: test-state-restore.py <native xvic or xplus4 library>")
+        raise SystemExit("usage: test-state-restore.py <native xvic, xplus4 or xpet library>")
     library = Path(sys.argv[1]).resolve(strict=True)
     with TemporaryDirectory(prefix="retrom-xvic-state-") as directory:
         root = Path(directory)
         # Project-owned BASIC: print a fixed caption, then loop without changing it.
-        program = bytearray((0x01, 0x10))
-        address = 0x1001
+        address = 0x0401 if "xpet" in library.name else 0x1001
+        program = bytearray(address.to_bytes(2, "little"))
         for number, body in [(10, b'\x99"RETROM STATE"'), (20, b'\x8920')]:
             address += 5 + len(body)
             program += address.to_bytes(2, "little") + number.to_bytes(2, "little") + body + b'\0'
