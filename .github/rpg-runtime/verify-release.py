@@ -26,6 +26,8 @@ parser.add_argument("--output", type=Path, required=True)
 parser.add_argument("--repository", required=True)
 parser.add_argument("--tag", required=True)
 parser.add_argument("--commit", required=True)
+parser.add_argument("--source-name", default="source.tar.gz")
+parser.add_argument("--metadata-name", default="rpg-runtime-release.json")
 parser.add_argument("--core", choices=("vice_xvic", "vice_xpet", "vice_xplus4"), default="vice_xvic")
 args = parser.parse_args()
 ARCHIVE = f"{args.core}-wasm.data"
@@ -77,6 +79,11 @@ with tempfile.TemporaryDirectory() as temporary:
 
 assets = [{"filename": path.name, "observedSha256": digest(path), "sizeBytes": path.stat().st_size}
           for path in (archive, license_path)]
+if args.core != "vice_xvic":
+    source = args.output / args.source_name
+    if source.is_symlink() or not source.is_file() or source.stat().st_size < 1:
+        raise SystemExit("RETROM_CORE_SOURCE_ARCHIVE_INVALID")
+    assets.append({"filename": source.name, "observedSha256": digest(source), "sizeBytes": source.stat().st_size})
 metadata = {
     "adapterAbi": "emulatorjs-state-v1",
     "assets": assets,
@@ -86,4 +93,4 @@ metadata = {
     "schemaVersion": 1,
     "tag": args.tag,
 }
-(args.output / "rpg-runtime-release.json").write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n")
+(args.output / args.metadata_name).write_text(json.dumps(metadata, indent=2, sort_keys=True) + "\n")
