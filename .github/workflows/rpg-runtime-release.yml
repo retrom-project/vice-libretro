@@ -39,6 +39,7 @@ jobs:
       - name: Build and test native VICE cores
         run: |
           for core in xvic xpet xplus4; do
+            make EMUTYPE="$core" clean
             make EMUTYPE="$core" -j"$(nproc)"
             python3 .github/rpg-runtime/test-state-restore.py "./vice_${core}_libretro.so"
           done
