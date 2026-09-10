@@ -61,6 +61,8 @@ def main() -> int:
             "rpg-runtime-release.json",
         ],
     }
+    expected["releaseAssets"] += [name for core in ("vice_xpet", "vice_xplus4")
+                                  for name in (f"{core}-wasm.data", f"{core}-source.tar.gz", f"{core}-release.json")]
     expected["developmentCandidateAssets"] = {
         core: [f"{core}-wasm.data", "COPYING", "source.tar.gz"]
         for core in ("vice_xpet", "vice_xplus4")

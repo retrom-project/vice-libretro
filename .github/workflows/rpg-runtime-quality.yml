@@ -24,28 +24,20 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y p7zip-full
       - name: Validate fork source contract
         run: python3 .github/rpg-runtime/verify-source.py
-      - name: Build native VIC-20 core
+      - name: Build and test native VICE cores
         run: |
-          make EMUTYPE=xvic -j"$(nproc)"
-          python3 .github/rpg-runtime/test-state-restore.py ./vice_xvic_libretro.so
-      - name: Build Web assets
+          for core in xvic xpet xplus4; do
+            make EMUTYPE="$core" -j"$(nproc)"
+            python3 .github/rpg-runtime/test-state-restore.py "./vice_${core}_libretro.so"
+          done
+      - name: Build and validate Web release assets
         run: |
           mkdir "$RUNNER_TEMP/rpg-runtime-output"
-          .github/rpg-runtime/build-web.sh "$RUNNER_TEMP/rpg-runtime-output"
-      - name: Validate candidate assets
-        run: |
-          python3 .github/rpg-runtime/verify-release.py \
-            --output "$RUNNER_TEMP/rpg-runtime-output" \
-            --repository "https://github.com/$GITHUB_REPOSITORY" \
-            --tag retrom-core-g1b4309f4d56d-r1-rc.1 \
-            --commit "$GITHUB_SHA"
+          .github/rpg-runtime/build-release.sh "$RUNNER_TEMP/rpg-runtime-output" retrom-core-g1b4309f4d56d-r2-rc.1
       - name: Upload branch integration candidate
         uses: actions/upload-artifact@v4
         with:
           name: rpg-runtime-vice-xvic-${{ github.sha }}
-          path: |
-            ${{ runner.temp }}/rpg-runtime-output/vice_xvic-wasm.data
-            ${{ runner.temp }}/rpg-runtime-output/COPYING
-            ${{ runner.temp }}/rpg-runtime-output/rpg-runtime-release.json
+          path: ${{ runner.temp }}/rpg-runtime-output/*
           if-no-files-found: error
           retention-days: 7

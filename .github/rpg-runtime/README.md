@@ -26,3 +26,8 @@ Run `python3 .github/rpg-runtime/test-state-restore.py ./vice_xvic_libretro.so`
 after the native build. It generates a project-owned BASIC loop in a temporary
 directory, saves in one process, restores in another, then tests a backward
 restore. Both video and audio must resume within the hard process timeout.
+
+Formal releases use `build-release.sh <absolute-empty-directory> <tag>` to build
+VIC-20, PET and Plus/4. PET/Plus4 each have a dedicated `<core>-release.json`
+and `<core>-source.tar.gz`; their metadata covers the core, COPYING and source.
+The existing VIC-20 metadata filename and asset contract remain compatible.

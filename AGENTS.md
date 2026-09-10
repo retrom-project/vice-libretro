@@ -25,8 +25,10 @@ databases, credentials, and private game content.
 - `.github/rpg-runtime/build-candidate.sh` is the only PFB build entry. It must
   build the current worktree and emit only the declared release assets plus
   `retrom-core-candidate.json`. The default variant is `vice_xvic`; set
-  `RETROM_VICE_CORE=vice_xpet` or `vice_xplus4` for development candidates.
-  Their declared assets include `source.tar.gz` in `developmentCandidateAssets`.
+  `RETROM_VICE_CORE=vice_xpet` or `vice_xplus4` to build PET or Plus/4 candidates.
+  Their candidate assets include `source.tar.gz` in `developmentCandidateAssets`.
+  Formal releases publish all three variants, with separate PET/Plus4 source
+  archives and metadata so each consumer verifies an exact asset set.
 
 Before publishing, build the native `xvic` core, run
 `python3 .github/rpg-runtime/test-state-restore.py ./vice_xvic_libretro.so`,
